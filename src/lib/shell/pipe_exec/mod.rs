@@ -33,6 +33,7 @@ use std::{
     io::{self, Write},
     os::unix::process::CommandExt,
     process::{exit, Command, Stdio},
+    str::FromStr,
 };
 use thiserror::Error;
 
@@ -520,11 +521,6 @@ fn spawn_proc(
                     "/",
                     "--tmpfs",
                     "/tmp",
-                    "--bind",
-                    ".",
-                    "/work",
-                    "--chdir",
-                    "/work",
                     "--ro-bind-try",
                     "/run",
                     "/run",
@@ -555,6 +551,20 @@ fn spawn_proc(
                     "--proc",
                     "/proc",
                 ]);
+                let cwd = shell.directory_stack.dir_from_top(0).unwrap();
+                tmp.args(&[
+                    "--bind",
+                    ".",
+                    cwd.to_str().unwrap(),
+                ]);
+                for arg in args[1..].iter().map(types::Str::as_str) {
+                    let path = std::path::PathBuf::from_str(arg).unwrap();
+                    if path.exists() {
+                        let path_abs = path.canonicalize().unwrap();
+                        let path_str = path_abs.to_str().unwrap();
+                        tmp.args(&["--bind", path_str, path_str]);
+                    }
+                }
                 tmp.arg(&args[0].as_str());
                 tmp
             } else {
