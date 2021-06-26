@@ -518,6 +518,8 @@ fn spawn_proc(
                 tmp.args(&[
                     "--tmpfs",
                     "/",
+                    "--tmpfs",
+                    "/tmp",
                     "--bind",
                     ".",
                     "/work",
