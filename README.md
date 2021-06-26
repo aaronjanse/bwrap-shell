@@ -1,3 +1,5 @@
+Inspiration: [Dot Dot Considered Harmful - Fuchsia](https://fuchsia.dev/fuchsia-src/concepts/filesystems/dotdot).
+
 This is an [ion shell](https://gitlab.redox-os.org/redox-os/ion) fork that runs every command in a sandbox containing only the current working directory (along with stuff like /dev, but we'll ignore that for now). So, programs can only operate upon the current working directory.
 
 Some interesting consequences:
