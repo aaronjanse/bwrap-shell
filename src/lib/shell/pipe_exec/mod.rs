@@ -501,6 +501,8 @@ impl<'b> Shell<'b> {
     }
 }
 
+const chroot: bool = true;
+
 fn spawn_proc(
     shell: &mut Shell<'_>,
     cmd: RefinedJob<'_>,
@@ -511,7 +513,52 @@ fn spawn_proc(
     let RefinedJob { mut var, mut args, stdin, stdout, stderr, redirection } = cmd;
     let pid = match var {
         Variant::External => {
-            let mut command = Command::new(&args[0].as_str());
+            let mut command = if chroot {
+                let mut tmp = Command::new("bwrap");
+                tmp.args(&[
+                    "--tmpfs",
+                    "/",
+                    "--bind",
+                    ".",
+                    "/work",
+                    "--chdir",
+                    "/work",
+                    "--ro-bind-try",
+                    "/run",
+                    "/run",
+                    "--ro-bind-try",
+                    "/nix",
+                    "/nix",
+                    "--ro-bind-try",
+                    "/bin",
+                    "/bin",
+                    "--ro-bind-try",
+                    "/lib",
+                    "/lib",
+                    "--ro-bind-try",
+                    "/lib64",
+                    "/lib64",
+                    "--ro-bind-try",
+                    "/usr",
+                    "/usr",
+                    "--ro-bind-try",
+                    "/sys",
+                    "/sys",
+                    "--ro-bind-try",
+                    "/var",
+                    "/var",
+                    "--dev-bind",
+                    "/dev",
+                    "/dev",
+                    "--proc",
+                    "/proc",
+                ]);
+                tmp.arg(&args[0].as_str());
+                tmp
+            } else {
+                Command::new(&args[0].as_str())
+            };
+
             command.args(args[1..].iter().map(types::Str::as_str));
 
             command.stdin(stdin.map_or_else(Stdio::inherit, Into::into));
